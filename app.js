@@ -2,12 +2,11 @@ const SYMBOLS = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.N
 
 async function getStockData(symbol) {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=6mo&interval=1d`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
     
     const res = await fetch(proxyUrl);
     if (!res.ok) throw new Error('Network response was not ok');
-    const proxyData = await res.json();
-    const parsed = JSON.parse(proxyData.contents);
+    const parsed = await res.json();
     
     const result = parsed.chart.result[0];
     const closes = result.indicators.quote[0].close;
