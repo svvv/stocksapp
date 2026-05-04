@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum AI Stock Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-chart-line"></i>
+                <h1>Quantum AI <span>Tracker</span></h1>
+            </div>
+            <div class="header-status">
+                <span class="live-indicator"></span>
+                <p>Live Market Tracking</p>
+                <button id="refresh-btn"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+            </div>
+        </header>
+
+        <div class="dashboard-stats">
+            <div class="stat-card glass">
+                <i class="fa-solid fa-arrow-trend-up stat-icon buy-color"></i>
+                <div>
+                    <h3>Top Opportunities</h3>
+                    <p id="top-opp-count">--</p>
+                </div>
+            </div>
+            <div class="stat-card glass">
+                <i class="fa-solid fa-arrow-trend-down stat-icon sell-color"></i>
+                <div>
+                    <h3>Market Risks</h3>
+                    <p id="risk-count">--</p>
+                </div>
+            </div>
+            <div class="stat-card glass">
+                <i class="fa-solid fa-clock stat-icon"></i>
+                <div>
+                    <h3>Last Updated</h3>
+                    <p id="last-updated">--:--:--</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="stocks-container glass">
+            <div class="table-header">
+                <h2><i class="fa-solid fa-ranking-star"></i> Top 10 Stock Signals</h2>
+            </div>
+            <div class="table-responsive">
+                <table id="stocks-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Price</th>
+                            <th>24h Change</th>
+                            <th>Trend (SMA 20/50)</th>
+                            <th>RSI (14d)</th>
+                            <th>Signal</th>
+                            <th style="width: 25%">Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stocks-body">
+                        <!-- Filled by JS -->
+                        <tr><td colspan="7" class="loading">Initializing Quantum Engine...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
