@@ -22,8 +22,14 @@
             </div>
             <div class="header-status">
                 <span class="live-indicator"></span>
-                <p>Live Market Tracking</p>
-                <button id="refresh-btn"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <div class="toggle-container" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 0.9rem;">Auto-Refresh</span>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-refresh-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <button id="refresh-btn" onclick="fetchStocks()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
             </div>
         </header>
 
@@ -51,9 +57,41 @@
             </div>
         </div>
 
+        <section class="filter-bar glass" id="filter-section">
+            <div class="filter-header">
+                <h2><i class="fa-solid fa-filter"></i> Price Range Filter</h2>
+                <span class="filter-status" id="filter-status">Showing: All Stocks</span>
+            </div>
+            <div class="filter-controls">
+                <div class="filter-presets">
+                    <button class="preset-btn" onclick="applyPreset(0, 50)">Under ₹50</button>
+                    <button class="preset-btn" onclick="applyPreset(50, 200)">₹50 – ₹200</button>
+                    <button class="preset-btn" onclick="applyPreset(200, 500)">₹200 – ₹500</button>
+                    <button class="preset-btn" onclick="applyPreset(500, 1000)">₹500 – ₹1K</button>
+                    <button class="preset-btn" onclick="applyPreset(1000, 5000)">₹1K – ₹5K</button>
+                    <button class="preset-btn" onclick="applyPreset(5000, 0)">Above ₹5K</button>
+                    <button class="preset-btn preset-all active" onclick="applyPreset(0, 0)">All</button>
+                </div>
+                <div class="filter-custom">
+                    <div class="input-group">
+                        <label for="min-price">Min ₹</label>
+                        <input type="number" id="min-price" placeholder="0" min="0" step="1">
+                    </div>
+                    <span class="filter-separator">–</span>
+                    <div class="input-group">
+                        <label for="max-price">Max ₹</label>
+                        <input type="number" id="max-price" placeholder="∞" min="0" step="1">
+                    </div>
+                    <button class="apply-filter-btn" onclick="applyCustomFilter()"><i class="fa-solid fa-magnifying-glass"></i> Apply</button>
+                    <button class="clear-filter-btn" onclick="applyPreset(0, 0)"><i class="fa-solid fa-xmark"></i> Clear</button>
+                </div>
+            </div>
+        </section>
+
         <section class="stocks-container glass">
             <div class="table-header">
                 <h2><i class="fa-solid fa-ranking-star"></i> Top 10 Stock Signals</h2>
+                <button class="fetch-new-btn" onclick="fetchNewStocks()" title="Scan the full universe for new top 10 stocks"><i class="fa-solid fa-satellite-dish"></i> Fetch New Stocks</button>
             </div>
             <div class="table-responsive">
                 <table id="stocks-table">
@@ -61,19 +99,196 @@
                         <tr>
                             <th>Symbol</th>
                             <th>Price</th>
-                            <th>24h Change</th>
-                            <th>Trend (SMA 20/50)</th>
-                            <th>RSI (14d)</th>
+                            <th>Trend (EMA 9/21)</th>
+                            <th>VWAP</th>
+                            <th>Target & SL</th>
+                            <th>Hold Time</th>
                             <th>Signal</th>
-                            <th style="width: 25%">Reason</th>
+                            <th style="width: 15%">Reason</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="stocks-body">
                         <!-- Filled by JS -->
-                        <tr><td colspan="7" class="loading">Initializing Quantum Engine...</td></tr>
+                        <tr><td colspan="9" class="loading">Initializing Quantum Engine...</td></tr>
                     </tbody>
                 </table>
             </div>
+            
+            <div class="simulator-container" style="margin-top: 30px; background: rgba(20, 20, 30, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px;">
+                <div class="sim-header">
+                    <div>
+                        <h2><i class="fa-solid fa-gamepad"></i> Paper Trading Simulator</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">Simulate trades to validate the AI signals against real market movement.</p>
+                    </div>
+                    <div class="sim-actions">
+                        <button class="sim-export-btn" onclick="exportPaperTrades()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+                        <button class="sim-clear-btn" onclick="clearAllPaperTrades()"><i class="fa-solid fa-trash-can"></i> Clear All</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="simulator-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Entry Price</th>
+                                <th>Target</th>
+                                <th>Stop Loss</th>
+                                <th>Current Price</th>
+                                <th>Unrealized P&L</th>
+                                <th>Trade Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="simulator-body">
+                            <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No simulated trades active. Click 'Simulate' on a signal above to track it.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ====== BACKTESTING ENGINE ====== -->
+            <div class="backtest-container" id="backtest-section" style="margin-top: 30px; background: rgba(20, 20, 30, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px;">
+                <div class="backtest-header">
+                    <div>
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> Automated Backtesting Engine</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">Replay historical dates to validate AI signals & feed verified outcomes into XGBoost for learning.</p>
+                    </div>
+                    <div class="backtest-mode-toggle">
+                        <button class="bt-mode-btn active" id="bt-mode-single" onclick="setBtMode('single')"><i class="fa-solid fa-calendar-day"></i> Single Day</button>
+                        <button class="bt-mode-btn" id="bt-mode-batch" onclick="setBtMode('batch')"><i class="fa-solid fa-calendar-week"></i> Date Range</button>
+                    </div>
+                </div>
+
+                <div class="backtest-controls glass" style="margin-top: 16px; padding: 1.2rem 1.5rem;">
+                    <div class="bt-control-row">
+                        <div class="bt-date-inputs">
+                            <div class="input-group">
+                                <label for="bt-date"><i class="fa-solid fa-calendar"></i> Backtest Date</label>
+                                <input type="date" id="bt-date" class="bt-input">
+                            </div>
+                            <div class="input-group">
+                                <label for="bt-time"><i class="fa-solid fa-clock"></i> Start Time</label>
+                                <input type="time" id="bt-time" class="bt-input" value="10:00">
+                            </div>
+                            <div class="input-group bt-range-field" style="display:none;">
+                                <label for="bt-end-date"><i class="fa-solid fa-calendar-check"></i> End Date</label>
+                                <input type="date" id="bt-end-date" class="bt-input">
+                            </div>
+                        </div>
+                        <div class="bt-price-inputs">
+                            <div class="input-group">
+                                <label for="bt-min-price">Min ₹</label>
+                                <input type="number" id="bt-min-price" placeholder="0" min="0" step="1">
+                            </div>
+                            <span class="filter-separator">–</span>
+                            <div class="input-group">
+                                <label for="bt-max-price">Max ₹</label>
+                                <input type="number" id="bt-max-price" placeholder="∞" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="bt-action-group">
+                            <label class="bt-checkbox-label">
+                                <input type="checkbox" id="bt-feed-model" checked>
+                                <span>Feed to XGBoost</span>
+                            </label>
+                            <button class="bt-run-btn" id="bt-run-btn" onclick="runBacktest()">
+                                <i class="fa-solid fa-play"></i> Run Backtest
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="bt-summary-grid" id="bt-summary" style="display:none; margin-top: 20px;">
+                    <div class="bt-stat-card">
+                        <div class="bt-stat-icon" style="color: var(--accent);"><i class="fa-solid fa-chart-bar"></i></div>
+                        <div><span class="bt-stat-label">Total Signals</span><span class="bt-stat-value" id="bt-total">0</span></div>
+                    </div>
+                    <div class="bt-stat-card">
+                        <div class="bt-stat-icon" style="color: var(--buy-color);"><i class="fa-solid fa-bullseye"></i></div>
+                        <div><span class="bt-stat-label">Target Hits</span><span class="bt-stat-value" id="bt-hits">0</span></div>
+                    </div>
+                    <div class="bt-stat-card">
+                        <div class="bt-stat-icon" style="color: var(--sell-color);"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div><span class="bt-stat-label">Stop Losses</span><span class="bt-stat-value" id="bt-sl">0</span></div>
+                    </div>
+                    <div class="bt-stat-card">
+                        <div class="bt-stat-icon" style="color: #a78bfa;"><i class="fa-solid fa-percentage"></i></div>
+                        <div><span class="bt-stat-label">Accuracy</span><span class="bt-stat-value" id="bt-accuracy">0%</span></div>
+                    </div>
+                    <div class="bt-stat-card">
+                        <div class="bt-stat-icon" id="bt-pnl-icon" style="color: var(--buy-color);"><i class="fa-solid fa-coins"></i></div>
+                        <div><span class="bt-stat-label">Avg P&L</span><span class="bt-stat-value" id="bt-pnl">0%</span></div>
+                    </div>
+                    <div class="bt-stat-card">
+                        <div class="bt-stat-icon" style="color: #f59e0b;"><i class="fa-solid fa-brain"></i></div>
+                        <div><span class="bt-stat-label">Fed to XGBoost</span><span class="bt-stat-value" id="bt-fed">0</span></div>
+                    </div>
+                </div>
+
+                <!-- XGBoost Model Status -->
+                <div class="bt-model-status glass" id="bt-model-status" style="display:none; margin-top: 16px; padding: 1rem 1.5rem;">
+                    <div class="bt-model-header">
+                        <h3><i class="fa-solid fa-microchip"></i> XGBoost Model Status</h3>
+                        <span class="bt-model-badge" id="bt-model-badge">Synthetic Only</span>
+                    </div>
+                    <div class="bt-model-details">
+                        <div><span>Real Samples:</span> <strong id="bt-real-samples">0</strong></div>
+                        <div class="bt-model-bar-container">
+                            <span>Training Mix:</span>
+                            <div class="bt-model-bar">
+                                <div class="bt-model-bar-fill" id="bt-real-bar" style="width: 0%;"></div>
+                            </div>
+                            <span id="bt-real-pct" style="font-size: 0.8rem;">0% real</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="bt-results-section" id="bt-results-section" style="display:none; margin-top: 20px;">
+                    <div class="bt-results-header">
+                        <h3><i class="fa-solid fa-list-check"></i> Backtest Results</h3>
+                        <button class="bt-export-btn" onclick="exportBacktestResults()"><i class="fa-solid fa-file-csv"></i> Export</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="bt-results-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Date</th>
+                                    <th>Signal</th>
+                                    <th>AI Prob</th>
+                                    <th>Entry</th>
+                                    <th>Target</th>
+                                    <th>Stop Loss</th>
+                                    <th>Exit</th>
+                                    <th>P&L</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bt-results-body">
+                                <tr><td colspan="10" style="text-align:center; color: var(--text-muted);">Run a backtest to see results.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Past Sessions -->
+                <div class="bt-history-section" style="margin-top: 24px;">
+                    <div class="bt-history-header">
+                        <h3><i class="fa-solid fa-folder-open"></i> Past Backtest Sessions</h3>
+                        <div>
+                            <button class="bt-history-refresh-btn" onclick="loadBacktestHistory()"><i class="fa-solid fa-rotate-right"></i></button>
+                            <button class="bt-history-clear-btn" onclick="clearBacktestHistory()"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                        </div>
+                    </div>
+                    <div class="bt-history-list" id="bt-history-list">
+                        <div class="bt-history-empty"><i class="fa-solid fa-inbox"></i><br>No backtest sessions yet.</div>
+                    </div>
+                </div>
+            </div>
+
         </section>
     </div>
     <script src="app.js"></script>

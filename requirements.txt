@@ -3,3 +3,7 @@ uvicorn
 yfinance
 pandas
 pandas_ta
+xgboost
+scikit-learn
+numpy
+python-multipart
