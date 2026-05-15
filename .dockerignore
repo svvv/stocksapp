@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.db
+.ipynb_checkpoints/
+.git/
+.gitignore
+paper_trades_log.csv
+stock_cache.json
+backtest_history.json
+model_training_data.json
+app.7z
